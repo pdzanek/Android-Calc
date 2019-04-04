@@ -17,13 +17,203 @@ public class BasicCalc extends AppCompatActivity implements View.OnClickListener
             button40,button41,button42,button43;
     String textViewString="";
     String operation="";
-    double operand1=0, operand2=0,result;
+    double operand1=0, operand2=0;
+    Double result;
     long lastButton01pressed=System.currentTimeMillis();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.basic_calc);
+
+        initComponents();
+
+        if(savedInstanceState!=null){
+            onRestoreInstanceState(savedInstanceState);
+            if(textViewString.equals(""))
+                textView.setText(operand1+"");
+            else
+            textView.setText(textViewString);
+        }
+    }
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putDouble("operand1", operand1);
+        savedInstanceState.putDouble("operand2", operand2);
+        savedInstanceState.putString("operation",operation);
+        savedInstanceState.putString("textViewString",textViewString);
+        savedInstanceState.putDouble("result", result);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        operand1 = savedInstanceState.getDouble("operand1");
+        operand2 = savedInstanceState.getDouble("operand2");
+        textViewString = savedInstanceState.getString("textViewString");
+        operation = savedInstanceState.getString("operation");
+        result = savedInstanceState.getDouble("result");
+    }
+
+    @Override
+    public void onClick(View v) {
+        Button b = (Button) v;
+        String buttonText = b.getText().toString();
+        switch (v.getId()) {
+            case R.id.button00:
+                if(textViewString.length()>0) {
+                    if(textViewString.equals("Błąd")){
+                        textViewString=0+"";
+                        textView.setText(textViewString);
+                    }
+                    else{
+                        textViewString = textViewString.substring(0, textViewString.length() - 1);
+                        textView.setText(textViewString);
+                    }
+                }
+                break;
+            case R.id.button01:
+                    if(lastButton01pressed<1000){
+                        operation="";
+                        operand1=0;
+                        operand2=0;
+                        textViewString="";
+                        result=null;
+                    }
+                    else {
+                        lastButton01pressed = System.currentTimeMillis();
+                        textViewString = "";
+                        textView.setText(textViewString);
+                    }
+                break;
+            case R.id.button10:
+            case R.id.button11:
+            case R.id.button12:
+            case R.id.button20:
+            case R.id.button21:
+            case R.id.button22:
+            case R.id.button30:
+            case R.id.button31:
+            case R.id.button32:
+            case R.id.button40:
+                    if(textViewString.equals("Błąd")) textViewString="";
+                    textViewString+=buttonText;
+                    textView.setText(textViewString);
+                break;
+            case R.id.button41:
+                if(textViewString.equals("Błąd")) textViewString="0.";
+                else {
+                    if(textViewString.contains(".")) {
+                        Toast.makeText(this, "Wprowadzona liczba posiada już separator dziesiętny!",
+                                Toast.LENGTH_LONG).show();
+                    }
+                    else{
+                        textViewString += buttonText;
+                        textView.setText(textViewString);
+                    }
+                }
+                break;
+            case R.id.button42: //+
+            case R.id.button13: // /
+            case R.id.button23: //*
+            case R.id.button33: //-
+                    if(operation==""){
+                        if(!(textViewString=="")){
+                            if(textViewString=="Błąd")
+                                operand1=0;
+                            else
+                                operand1=Double.parseDouble(textViewString);
+                            operation=buttonText;
+                            textViewString="";
+                        }
+                    }
+                    else{
+                        if(!(textViewString=="")) {
+                            if(textViewString=="Błąd") {
+                                operand2 = 0;
+                            }
+                            else {
+                                operand2 = Double.parseDouble(textViewString);
+                            }
+                            if(operand2==0 && operation.equals("/")) {
+                                result=null;
+                                operand1 = 0;
+                                operand2 = 0;
+                                operation = "";
+                                textViewString = "Błąd";
+                                textView.setText(textViewString);
+                                Toast.makeText(this, "Wykryto próbę dzielenia przez zero!",
+                                        Toast.LENGTH_LONG).show();
+                            }
+                            else{
+                                calculate(operand1, operand2, operation);
+                                operation = buttonText;
+                                textViewString = "";
+                                operand2 = 0;
+                                operand1 = result;
+                                textView.setText(result + "");
+                            }
+                        }
+                    }
+                break;
+            case R.id.button43: //=
+                if(operation!="") {
+                    if (!(textViewString.equals(""))) {
+                        operand2 = Double.parseDouble(textViewString);
+                        if (operation.equals("/") && operand2 == 0) {
+                            operand1 = 0;
+                            operand2 = 0;
+                            operation = "";
+                            textViewString = "Błąd";
+                            textView.setText(textViewString);
+                            Toast.makeText(this, "Wykryto próbę dzielenia przez zero!",
+                                    Toast.LENGTH_LONG).show();
+                        } else {
+                            calculate(operand1, operand2, operation);
+                            operand1 = 0;
+                            operand2 = 0;
+                            operation = "";
+                            textViewString = result + "";
+                            textView.setText(textViewString);
+                            result=null;
+                        }
+                    }
+                }
+                break;
+            case R.id.button02:
+                if(!textViewString.equals("")) {
+                    if (textViewString.charAt(0) == '-')
+                        textViewString = textViewString.substring(1);
+                    else textViewString = "-" + textViewString;
+                    textView.setText(textViewString);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    public double calculate(double operand1, double operand2, String operation)
+    {
+        switch(operation){
+            case "+":
+                result= operand1+operand2;
+                break;
+            case "*":
+                result= operand1*operand2;
+                break;
+            case "-":
+                result= operand1-operand2;
+                break;
+            case "/":
+                result= operand1/operand2;
+                break;
+            default:
+                break;
+        }
+        return result;
+    }
+    private void initComponents(){
         textView = findViewById(R.id.textView);
         button00 = findViewById(R.id.button00);
         button00.setOnClickListener(this);
@@ -67,153 +257,5 @@ public class BasicCalc extends AppCompatActivity implements View.OnClickListener
         button42.setOnClickListener(this);
         button43 = findViewById(R.id.button43);
         button43.setOnClickListener(this);
-
-        if(savedInstanceState!=null){
-            onRestoreInstanceState(savedInstanceState);
-            if(textViewString.equals(""))
-                textView.setText(operand1+"");
-            else
-            textView.setText(textViewString);
-        }
-    }
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        super.onSaveInstanceState(savedInstanceState);
-        savedInstanceState.putDouble("operand1", operand1);
-        savedInstanceState.putDouble("operand2", operand2);
-        savedInstanceState.putString("operation",operation);
-        savedInstanceState.putString("textViewString",textViewString);
-    }
-
-    @Override
-    public void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        operand1 = savedInstanceState.getDouble("operand1");
-        operand2 = savedInstanceState.getDouble("operand2");
-        textViewString = savedInstanceState.getString("textViewString");
-        operation = savedInstanceState.getString("operation");
-    }
-
-    @Override
-    public void onClick(View v) {
-        Button b = (Button) v;
-        String buttonText = b.getText().toString();
-        switch (v.getId()) {
-            case R.id.button00:
-                if(textViewString.length()>0) {
-                    if(textViewString.equals("Błąd")){
-                        textViewString=0+"";
-                        textView.setText(textViewString);
-                    }
-                    else{
-                        textViewString = textViewString.substring(0, textViewString.length() - 1);
-                        textView.setText(textViewString);
-                    }
-                }
-                break;
-            case R.id.button01:
-                    if(lastButton01pressed<1000){
-                        operation="";
-                        operand1=0;
-                        operand2=0;
-                        textViewString="";
-                    }
-                    else {
-                        lastButton01pressed = System.currentTimeMillis();
-                        textViewString = "";
-                        textView.setText(textViewString);
-                    }
-                break;
-            case R.id.button10:
-            case R.id.button11:
-            case R.id.button12:
-            case R.id.button20:
-            case R.id.button21:
-            case R.id.button22:
-            case R.id.button30:
-            case R.id.button31:
-            case R.id.button32:
-            case R.id.button40:
-                    if(textViewString.equals("Błąd")) textViewString="";
-                    textViewString+=buttonText;
-                    textView.setText(textViewString);
-                break;
-            case R.id.button41:
-                if(textViewString.equals("Błąd")) textViewString="0.";
-                else {
-                    if(textViewString.contains(".")) {
-                        Toast.makeText(this, "Wprowadzona liczba posiada już separator dziesiętny!",
-                                Toast.LENGTH_LONG).show();
-                    }
-                    else{
-                        textViewString += buttonText;
-                        textView.setText(textViewString);
-                    }
-                }
-                break;
-            case R.id.button42: //+
-            case R.id.button13: // /
-            case R.id.button23: //*
-            case R.id.button33: //-
-                if((operation.equals(""))) {
-                    operation = buttonText;
-                    if(textViewString.equals("") || textViewString.equals("Błąd")) operand1=0;
-                    else operand1 = Double.parseDouble(textViewString);
-                    textViewString = "";
-                }
-                else{
-                    operation = buttonText;
-                }
-
-                break;
-            case R.id.button43: //=
-                if(operation!="") {
-                    if (!(textViewString.equals(""))) {
-                        operand2 = Double.parseDouble(textViewString);
-                        if (operation.equals("/") && operand2 == 0) {
-                            operand1 = 0;
-                            operand2 = 0;
-                            operation = "";
-                            textViewString = "Błąd";
-                            textView.setText(textViewString);
-                            Toast.makeText(this, "Wykryto próbę dzielenia przez zero!",
-                                    Toast.LENGTH_LONG).show();
-                        } else {
-                            result = calculate(operand1, operand2, operation);
-                            operand1 = 0;
-                            operand2 = 0;
-                            operation = "";
-                            textViewString = result + "";
-                            textView.setText(textViewString);
-                        }
-                    }
-                }
-                break;
-            case R.id.button02:
-                if(!textViewString.equals("")) {
-                    if (textViewString.charAt(0) == '-')
-                        textViewString = textViewString.substring(1);
-                    else textViewString = "-" + textViewString;
-                    textView.setText(textViewString);
-                }
-                break;
-            default:
-                break;
-        }
-    }
-    public double calculate(double operand1, double operand2, String operation)
-    {
-        switch(operation){
-            case "+":
-                return operand1+operand2;
-            case "*":
-                return operand1*operand2;
-            case "-":
-                return operand1-operand2;
-            case "/":
-                return operand1/operand2;
-            default:
-                return 1;
-        }
     }
 }

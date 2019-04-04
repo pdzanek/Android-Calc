@@ -19,75 +19,15 @@ public class AdvancedCalc extends AppCompatActivity implements View.OnClickListe
             button60,button61,button62,button63;
     String textViewString="";
     String operation="";
-    double operand1=0, operand2=0,result;
+    double operand1=0, operand2=0;
+    Double result;
     long lastButton01pressed=System.currentTimeMillis();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_advanced_calc);
-        textView = findViewById(R.id.textView);
-        button00 = findViewById(R.id.button00);
-        button00.setOnClickListener(this);
-        button01 = findViewById(R.id.button01);
-        button01.setOnClickListener(this);
-        button02 = findViewById(R.id.button02);
-        button02.setOnClickListener(this);
-
-        button10 = findViewById(R.id.button10);
-        button10.setOnClickListener(this);
-        button11 = findViewById(R.id.button11);
-        button11.setOnClickListener(this);
-        button12 = findViewById(R.id.button12);
-        button12.setOnClickListener(this);
-        button13 = findViewById(R.id.button13);
-        button13.setOnClickListener(this);
-
-        button20 = findViewById(R.id.button20);
-        button20.setOnClickListener(this);
-        button21 = findViewById(R.id.button21);
-        button21.setOnClickListener(this);
-        button22 = findViewById(R.id.button22);
-        button22.setOnClickListener(this);
-        button23 = findViewById(R.id.button23);
-        button23.setOnClickListener(this);
-
-        button30 = findViewById(R.id.button30);
-        button30.setOnClickListener(this);
-        button31 = findViewById(R.id.button31);
-        button31.setOnClickListener(this);
-        button32 = findViewById(R.id.button32);
-        button32.setOnClickListener(this);
-        button33 = findViewById(R.id.button33);
-        button33.setOnClickListener(this);
-
-        button40 = findViewById(R.id.button40);
-        button40.setOnClickListener(this);
-        button41 = findViewById(R.id.button41);
-        button41.setOnClickListener(this);
-        button42 = findViewById(R.id.button42);
-        button42.setOnClickListener(this);
-        button43 = findViewById(R.id.button43);
-        button43.setOnClickListener(this);
-
-        button50 = findViewById(R.id.button50);
-        button50.setOnClickListener(this);
-        button51 = findViewById(R.id.button51);
-        button51.setOnClickListener(this);
-        button52 = findViewById(R.id.button52);
-        button52.setOnClickListener(this);
-        button53 = findViewById(R.id.button53);
-        button53.setOnClickListener(this);
-
-        button60 = findViewById(R.id.button60);
-        button60.setOnClickListener(this);
-        button61 = findViewById(R.id.button61);
-        button61.setOnClickListener(this);
-        button62 = findViewById(R.id.button62);
-        button62.setOnClickListener(this);
-        button63 = findViewById(R.id.button63);
-        button63.setOnClickListener(this);
-
+        initComponents();
         if (savedInstanceState != null) {
             onRestoreInstanceState(savedInstanceState);
             if (textViewString.equals(""))
@@ -103,6 +43,7 @@ public class AdvancedCalc extends AppCompatActivity implements View.OnClickListe
         savedInstanceState.putDouble("operand2", operand2);
         savedInstanceState.putString("operation",operation);
         savedInstanceState.putString("textViewString",textViewString);
+        savedInstanceState.putDouble("result", result);
     }
 
     @Override
@@ -112,6 +53,7 @@ public class AdvancedCalc extends AppCompatActivity implements View.OnClickListe
         operand2 = savedInstanceState.getDouble("operand2");
         textViewString = savedInstanceState.getString("textViewString");
         operation = savedInstanceState.getString("operation");
+        result = savedInstanceState.getDouble("result");
     }
 
     @Override
@@ -137,6 +79,7 @@ public class AdvancedCalc extends AppCompatActivity implements View.OnClickListe
                     operand1=0;
                     operand2=0;
                     textViewString="";
+                    result=null;
                 }
                 else {
                     lastButton01pressed = System.currentTimeMillis();
@@ -174,18 +117,46 @@ public class AdvancedCalc extends AppCompatActivity implements View.OnClickListe
             case R.id.button42: //+
             case R.id.button13: // /
             case R.id.button23: //*
-            case R.id.button33: //-
             case R.id.button62: //x^y
-                if((operation.equals(""))) {
-                    operation = buttonText;
-                    if(textViewString.equals("") || textViewString.equals("Błąd")) operand1=0;
-                    else operand1 = Double.parseDouble(textViewString);
-                    textViewString = "";
+            case R.id.button33: //-
+                if(operation.equals("")){
+                    if(!(textViewString.equals(""))){
+                        if(textViewString=="Błąd")
+                            operand1=0;
+                        else
+                            operand1=Double.parseDouble(textViewString);
+                        operation=buttonText;
+                        textViewString="";
+                    }
                 }
                 else{
-                    operation = buttonText;
+                    if(!(textViewString.equals(""))) {
+                        if(textViewString.equals("Błąd")) {
+                            operand2 = 0;
+                        }
+                        else {
+                            operand2 = Double.parseDouble(textViewString);
+                        }
+                        if(operand2==0 && operation.equals("/")) {
+                            result=null;
+                            operand1 = 0;
+                            operand2 = 0;
+                            operation = "";
+                            textViewString = "Błąd";
+                            textView.setText(textViewString);
+                            Toast.makeText(this, "Wykryto próbę dzielenia przez zero!",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                        else{
+                            calculate(operand1, operand2, operation);
+                            operation = buttonText;
+                            textViewString = "";
+                            operand2 = 0;
+                            operand1 = result;
+                            textView.setText(result + "");
+                        }
+                    }
                 }
-
                 break;
             case R.id.button43: //=
                 if(operation!="") {
@@ -200,12 +171,13 @@ public class AdvancedCalc extends AppCompatActivity implements View.OnClickListe
                             Toast.makeText(this, "Wykryto próbę dzielenia przez zero!",
                                     Toast.LENGTH_LONG).show();
                         } else {
-                            result = calculate(operand1, operand2, operation);
+                            calculate(operand1, operand2, operation);
                             operand1 = 0;
                             operand2 = 0;
                             operation = "";
                             textViewString = result + "";
                             textView.setText(textViewString);
+                            result=null;
                         }
                     }
                 }
@@ -316,17 +288,86 @@ public class AdvancedCalc extends AppCompatActivity implements View.OnClickListe
     {
         switch(operation){
             case "+":
-                return operand1+operand2;
+                result= operand1+operand2;
+                break;
             case "*":
-                return operand1*operand2;
+                result= operand1*operand2;
+                break;
             case "-":
-                return operand1-operand2;
+                result= operand1-operand2;
+                break;
             case "/":
-                return operand1/operand2;
+                result= operand1/operand2;
+                break;
             case "x^y":
-                return Math.pow(operand1,operand2);
+                result=Math.pow(operand1,operand2);
+                break;
             default:
-                return 1;
+                break;
         }
+        return result;
+    }
+    private void initComponents(){
+        textView = findViewById(R.id.textView);
+        button00 = findViewById(R.id.button00);
+        button00.setOnClickListener(this);
+        button01 = findViewById(R.id.button01);
+        button01.setOnClickListener(this);
+        button02 = findViewById(R.id.button02);
+        button02.setOnClickListener(this);
+
+        button10 = findViewById(R.id.button10);
+        button10.setOnClickListener(this);
+        button11 = findViewById(R.id.button11);
+        button11.setOnClickListener(this);
+        button12 = findViewById(R.id.button12);
+        button12.setOnClickListener(this);
+        button13 = findViewById(R.id.button13);
+        button13.setOnClickListener(this);
+
+        button20 = findViewById(R.id.button20);
+        button20.setOnClickListener(this);
+        button21 = findViewById(R.id.button21);
+        button21.setOnClickListener(this);
+        button22 = findViewById(R.id.button22);
+        button22.setOnClickListener(this);
+        button23 = findViewById(R.id.button23);
+        button23.setOnClickListener(this);
+
+        button30 = findViewById(R.id.button30);
+        button30.setOnClickListener(this);
+        button31 = findViewById(R.id.button31);
+        button31.setOnClickListener(this);
+        button32 = findViewById(R.id.button32);
+        button32.setOnClickListener(this);
+        button33 = findViewById(R.id.button33);
+        button33.setOnClickListener(this);
+
+        button40 = findViewById(R.id.button40);
+        button40.setOnClickListener(this);
+        button41 = findViewById(R.id.button41);
+        button41.setOnClickListener(this);
+        button42 = findViewById(R.id.button42);
+        button42.setOnClickListener(this);
+        button43 = findViewById(R.id.button43);
+        button43.setOnClickListener(this);
+
+        button50 = findViewById(R.id.button50);
+        button50.setOnClickListener(this);
+        button51 = findViewById(R.id.button51);
+        button51.setOnClickListener(this);
+        button52 = findViewById(R.id.button52);
+        button52.setOnClickListener(this);
+        button53 = findViewById(R.id.button53);
+        button53.setOnClickListener(this);
+
+        button60 = findViewById(R.id.button60);
+        button60.setOnClickListener(this);
+        button61 = findViewById(R.id.button61);
+        button61.setOnClickListener(this);
+        button62 = findViewById(R.id.button62);
+        button62.setOnClickListener(this);
+        button63 = findViewById(R.id.button63);
+        button63.setOnClickListener(this);
     }
 }
